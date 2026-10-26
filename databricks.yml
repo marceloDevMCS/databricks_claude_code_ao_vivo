@@ -12,7 +12,7 @@ experimental:
 variables:
   catalog:
     description: The Unity Catalog catalog holding the bronze/silver/gold schemas (must already exist).
-    # Supply the catalog per environment through DATABRICKS_BUNDLE_VAR_catalog.
+    # Supply the catalog per environment through BUNDLE_VAR_catalog.
   bronze_schema:
     description: Schema name for the bronze (raw ingestion) layer
     default: bronze
