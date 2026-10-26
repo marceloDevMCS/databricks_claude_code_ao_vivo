@@ -8,12 +8,11 @@ include:
 experimental:
   skip_name_prefix_for_schema: true
 
-# Variable declarations. Catalog values are assigned per target below.
+# Variable declarations. Catalog values are supplied per environment at deploy time.
 variables:
   catalog:
     description: The Unity Catalog catalog holding the bronze/silver/gold schemas (must already exist).
-    # Supply per environment through DATABRICKS_BUNDLE_VAR_catalog.
-    default: bakehouse_dev
+    # Supply the catalog per environment through DATABRICKS_BUNDLE_VAR_catalog.
   bronze_schema:
     description: Schema name for the bronze (raw ingestion) layer
     default: bronze
@@ -41,8 +40,6 @@ targets:
     workspace:
       host: https://dbc-d988e786-a705.cloud.databricks.com
       root_path: /Workspace/${bundle.name}/${bundle.target}
-    variables:
-      catalog: bakehouse
     run_as:
       service_principal_name: ca681ee2-3d75-4b5c-aa79-708fec7f336b
     permissions:

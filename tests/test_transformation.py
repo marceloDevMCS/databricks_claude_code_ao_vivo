@@ -9,6 +9,7 @@ escolhido um nome de arquivo especifico. O recurso de pipeline e achado varrendo
 `pipelines.yml` em vez de `bakehouse_pipeline.yml`, os testes continuam valendo.
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -39,34 +40,12 @@ def _pipeline() -> dict:
     raise AssertionError("nenhum recurso 'pipelines:' encontrado em resources/*.yml")
 
 
-def _catalogos_de_ambiente() -> set[str]:
-    """Catalogos concretos usados pelos targets do databricks.yml (ex.: bakehouse_dev)."""
-    doc = yaml.safe_load((REPO / "databricks.yml").read_text()) or {}
-    nomes = set()
-    for target in (doc.get("targets") or {}).values():
-        valor = ((target or {}).get("variables") or {}).get("catalog")
-        if isinstance(valor, str) and "${" not in valor:
-            nomes.add(valor)
-    return nomes
-
-
 SQL_FILES = sorted((REPO / "src").rglob("*.sql"))
 CONFIG = _pipeline().get("configuration") or {}
-CATALOGOS = _catalogos_de_ambiente()
 
 
 def ids(p: Path) -> str:
     return str(p.relative_to(REPO))
-
-
-def catalogos_vazados(texto: str) -> set[str]:
-    """Catalogo de ambiente escrito como QUALIFICADOR RAIZ de um nome.
-
-    O lookbehind evita o falso positivo classico: o catalogo de prod se chama `bakehouse`
-    e a fonte e `samples.bakehouse.sales_customers` -- ali `bakehouse` e schema da fonte,
-    vem depois de um ponto, e nao e hardcode nenhum.
-    """
-    return {c for c in CATALOGOS if re.search(rf"(?<![\w.${{]){re.escape(c)}\s*\.", texto)}
 
 
 def resolve_camada(token: str) -> str | None:
@@ -87,6 +66,12 @@ def test_existe_sql_para_o_pipeline_carregar():
     assert SQL_FILES, "nenhum .sql em src/ -- o pipeline nao tem o que carregar"
 
 
+@pytest.mark.parametrize("sql", SQL_FILES, ids=ids)
+def test_sql_utf8_sem_bom(sql):
+    """BOM no primeiro byte vira caractere SQL e pode quebrar o parser na posição 0."""
+    assert not sql.read_bytes().startswith(b"\xef\xbb\xbf"), "remova o BOM UTF-8 deste arquivo SQL"
+
+
 def test_as_tres_camadas_existem_como_schema_do_bundle():
     """O desenho do workshop: o schema E a camada, declarada como recurso do bundle."""
     declarados = set()
@@ -95,6 +80,25 @@ def test_as_tres_camadas_existem_como_schema_do_bundle():
         declarados |= set((doc.get("resources") or {}).get("schemas") or {})
     faltando = set(LAYERS) - {s.lower() for s in declarados}
     assert not faltando, f"schemas nao declarados como recurso do bundle: {faltando}"
+
+
+def test_catalogo_e_injetado_por_ambiente_sem_valores_hardcoded():
+    """O mesmo bundle deve receber o catalogo escolhido no ambiente que o executa."""
+    doc = yaml.safe_load((REPO / "databricks.yml").read_text(encoding="utf-8")) or {}
+    catalog = (doc.get("variables") or {}).get("catalog") or {}
+    assert "default" not in catalog, "catalog deve vir de DATABRICKS_BUNDLE_VAR_catalog"
+
+    for target, config in (doc.get("targets") or {}).items():
+        value = ((config or {}).get("variables") or {}).get("catalog")
+        assert value is None or "${" in str(value), f"catalog hardcoded no target {target}: {value}"
+
+    assert _pipeline().get("catalog") == "${var.catalog}"
+    for yml in (REPO / "resources").glob("*.yml"):
+        resources = yaml.safe_load(yml.read_text(encoding="utf-8")) or {}
+        for schema in ((resources.get("resources") or {}).get("schemas") or {}).values():
+            assert schema.get("catalog_name") == "${var.catalog}"
+        for dashboard in ((resources.get("resources") or {}).get("dashboards") or {}).values():
+            assert dashboard.get("dataset_catalog") == "${var.catalog}"
 
 
 @pytest.mark.parametrize("sql", SQL_FILES, ids=ids)
@@ -126,14 +130,18 @@ def test_camada_bate_com_a_pasta(sql):
 
 
 @pytest.mark.parametrize("sql", SQL_FILES, ids=ids)
-def test_sem_catalogo_de_ambiente_hardcoded(sql):
-    """O catalogo vem do bundle. Hardcode faz o prod escrever no dev -- silenciosamente."""
-    vazados = catalogos_vazados(sql.read_text())
-    assert not vazados, f"catalogo de ambiente hardcoded: {vazados} -- parametrize com ${{...}}"
+def test_destino_sql_usa_catalogo_do_pipeline(sql):
+    """As tabelas destino usam o catalogo configurado no bundle, nunca um literal."""
+    destinos = CREATE.findall(sql.read_text(encoding="utf-8"))
+    for destino in destinos:
+        assert destino.startswith("${medallion_catalog}.") or destino.startswith("${var.catalog}.")
 
 
 @pytest.mark.parametrize("dash", sorted((REPO / "src").rglob("*.lvdash.json")), ids=lambda p: str(p.relative_to(REPO)))
 def test_dashboard_sem_catalogo_hardcoded(dash):
     """Dashboard com catalogo no JSON quebra ao trocar de target. Use dataset_catalog/schema."""
-    vazados = catalogos_vazados(dash.read_text())
-    assert not vazados, f"catalogo de ambiente hardcoded no dashboard: {vazados}"
+    dashboard = json.loads(dash.read_text(encoding="utf-8"))
+    for dataset in dashboard.get("datasets", []):
+        query = "".join(dataset.get("queryLines", []))
+        qualified_sources = re.findall(r"\b(?:FROM|JOIN)\s+([\w$`]+\.[\w$`.]+)", query, re.IGNORECASE)
+        assert not qualified_sources, f"use nome de tabela sem catalogo/schema: {qualified_sources}"

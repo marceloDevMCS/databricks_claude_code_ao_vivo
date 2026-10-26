@@ -66,3 +66,17 @@ with this project. It's also possible to interact with it directly using the CLI
    ```
    $ uv run pytest
    ```
+
+## GitHub Actions CI/CD
+
+- Pull requests to `main` run Ruff and offline pytest. These jobs do not receive Databricks credentials.
+- Pushes to `main` run the tests, validate the production bundle, and deploy it.
+- The production deploy uses the GitHub Environment named `prod`. Add required reviewers there if production deploys should wait for approval.
+
+Configure these repository settings before enabling production deployments:
+
+- Secrets: `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET` for the Databricks service principal.
+- Variable: `DATABRICKS_CATALOG_PROD` with the existing Unity Catalog catalog for production.
+- Protect `main` and require the `lint + offline pytest` check before merging.
+
+For local dev/prod commands, set `DATABRICKS_BUNDLE_VAR_catalog` to the catalog for that environment before running `databricks bundle validate`, `deploy`, or `run`. Catalog names are not defaults or target literals in the bundle.
