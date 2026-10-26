@@ -32,11 +32,11 @@
   ],
   "uiSettings": {
     "theme": {
-      "canvasBackgroundColor": { "light": "#FCFCFC", "dark": "#1F272D" },
-      "widgetBackgroundColor": { "light": "#FFFFFF", "dark": "#11171C" },
-      "fontColor": { "light": "#11171C", "dark": "#E8ECF0" },
-      "selectionColor": { "light": "#2272B4", "dark": "#8ACAFF" },
-      "visualizationColors": ["#FFA600", "#FF7054", "#DE5582", "#995495", "#4E5185", "#1D425C", "#99DDB4"],
+      "canvasBackgroundColor": { "light": "#F2F7FC", "dark": "#111D2A" },
+      "widgetBackgroundColor": { "light": "#FFFFFF", "dark": "#18283A" },
+      "fontColor": { "light": "#14283B", "dark": "#E8F2FC" },
+      "selectionColor": { "light": "#1E5AA8", "dark": "#69B5F5" },
+      "visualizationColors": ["#123B66", "#185A9D", "#247BA0", "#2F90C0", "#4EA5D9", "#77BDF2", "#A8D8F0"],
       "widgetHeaderAlignment": "LEFT"
     }
   }
