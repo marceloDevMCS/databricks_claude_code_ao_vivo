@@ -1,0 +1,9 @@
+﻿resources:
+  dashboards:
+    bakehouse_ai_bi:
+      display_name: Bakehouse | Operações e Receita
+      file_path: ../src/dashboards/bakehouse.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${resources.schemas.gold.name}
+

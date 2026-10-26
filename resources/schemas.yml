@@ -1,0 +1,14 @@
+resources:
+  schemas:
+    bronze:
+      name: bronze
+      catalog_name: ${var.catalog}
+      comment: Raw source copies for the Bakehouse medallion pipeline
+    silver:
+      name: silver
+      catalog_name: ${var.catalog}
+      comment: Cleaned and conformed Bakehouse data
+    gold:
+      name: gold
+      catalog_name: ${var.catalog}
+      comment: Business marts for Bakehouse analytics and BI

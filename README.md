@@ -29,6 +29,12 @@ If you're developing with an IDE, dependencies for this project should be instal
 
 # Using this project using the CLI
 
+The target catalog is intentionally not stored in this repository. Supply the
+catalog selected for the deployment environment through
+`DATABRICKS_BUNDLE_VAR_catalog` before validating, deploying, or running the
+bundle. Set that variable independently in each environment; the pipeline and
+schema resources consume it through `${var.catalog}`.
+
 The Databricks workspace and IDE extensions provide a graphical interface for working
 with this project. It's also possible to interact with it directly using the CLI:
 

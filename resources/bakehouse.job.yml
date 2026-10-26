@@ -1,0 +1,12 @@
+resources:
+  jobs:
+    bakehouse_refresh_job:
+      name: ${bundle.name}-${bundle.target}-refresh
+      performance_target: STANDARD
+      tags:
+        aidevkit_project: ai-dev-kit
+      tasks:
+        - task_key: refresh_medallion_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.bakehouse_medallion.id}
+            full_refresh: false
