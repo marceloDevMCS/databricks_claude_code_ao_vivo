@@ -2,9 +2,9 @@ name: Databricks CI/CD
 
 on:
   pull_request:
-    branches: [main]
+    branches: [master]
   push:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: read
@@ -21,7 +21,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      - run: uv sync --dev
+      - run: uv sync --locked --dev
       - name: Ruff
         run: uv run ruff check src tests
       - name: Unit tests (without Databricks credentials)
@@ -33,11 +33,11 @@ jobs:
     name: bundle validate (prod)
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
       DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-      DATABRICKS_BUNDLE_VAR_catalog: ${{ vars.DATABRICKS_CATALOG_PROD }}
+      BUNDLE_VAR_catalog: ${{ vars.DATABRICKS_CATALOG_PROD }}
     steps:
       - uses: actions/checkout@v4
       - uses: databricks/setup-cli@v1.8.0
@@ -50,14 +50,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     environment: prod
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     concurrency:
       group: deploy-prod
       cancel-in-progress: false
     env:
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
       DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-      DATABRICKS_BUNDLE_VAR_catalog: ${{ vars.DATABRICKS_CATALOG_PROD }}
+      BUNDLE_VAR_catalog: ${{ vars.DATABRICKS_CATALOG_PROD }}
     steps:
       - uses: actions/checkout@v4
       - uses: databricks/setup-cli@v1.8.0

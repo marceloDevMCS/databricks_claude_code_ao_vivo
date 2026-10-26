@@ -31,7 +31,7 @@ If you're developing with an IDE, dependencies for this project should be instal
 
 The target catalog is intentionally not stored in this repository. Supply the
 catalog selected for the deployment environment through
-`DATABRICKS_BUNDLE_VAR_catalog` before validating, deploying, or running the
+`BUNDLE_VAR_catalog` before validating, deploying, or running the
 bundle. Set that variable independently in each environment; the pipeline and
 schema resources consume it through `${var.catalog}`.
 
@@ -69,14 +69,14 @@ with this project. It's also possible to interact with it directly using the CLI
 
 ## GitHub Actions CI/CD
 
-- Pull requests to `main` run Ruff and offline pytest. These jobs do not receive Databricks credentials.
-- Pushes to `main` run the tests, validate the production bundle, and deploy it.
+- Pull requests to `master` run Ruff and offline pytest. These jobs do not receive Databricks credentials.
+- Pushes to `master` run the tests, validate the production bundle, and deploy it.
 - The production deploy uses the GitHub Environment named `prod`. Add required reviewers there if production deploys should wait for approval.
 
 Configure these repository settings before enabling production deployments:
 
 - Secrets: `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET` for the Databricks service principal.
 - Variable: `DATABRICKS_CATALOG_PROD` with the existing Unity Catalog catalog for production.
-- Protect `main` and require the `lint + offline pytest` check before merging.
+- Protect `master` and require the `lint + offline pytest` check before merging.
 
-For local dev/prod commands, set `DATABRICKS_BUNDLE_VAR_catalog` to the catalog for that environment before running `databricks bundle validate`, `deploy`, or `run`. Catalog names are not defaults or target literals in the bundle.
+For local dev/prod commands, set `BUNDLE_VAR_catalog` to the catalog for that environment before running `databricks bundle validate`, `deploy`, or `run`. Catalog names are not defaults or target literals in the bundle. In PowerShell: `$env:BUNDLE_VAR_catalog = "<catalog>"`.

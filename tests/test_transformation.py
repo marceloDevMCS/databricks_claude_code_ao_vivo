@@ -86,7 +86,7 @@ def test_catalogo_e_injetado_por_ambiente_sem_valores_hardcoded():
     """O mesmo bundle deve receber o catalogo escolhido no ambiente que o executa."""
     doc = yaml.safe_load((REPO / "databricks.yml").read_text(encoding="utf-8")) or {}
     catalog = (doc.get("variables") or {}).get("catalog") or {}
-    assert "default" not in catalog, "catalog deve vir de DATABRICKS_BUNDLE_VAR_catalog"
+    assert "default" not in catalog, "catalog deve vir de BUNDLE_VAR_catalog"
 
     for target, config in (doc.get("targets") or {}).items():
         value = ((config or {}).get("variables") or {}).get("catalog")
