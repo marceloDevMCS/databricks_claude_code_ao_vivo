@@ -134,7 +134,7 @@ def test_destino_sql_usa_catalogo_do_pipeline(sql):
     """As tabelas destino usam o catalogo configurado no bundle, nunca um literal."""
     destinos = CREATE.findall(sql.read_text(encoding="utf-8"))
     for destino in destinos:
-        assert destino.startswith("${medallion_catalog}.") or destino.startswith("${var.catalog}.")
+        assert destino.startswith(("${medallion_catalog}.", "${var.catalog}."))
 
 
 @pytest.mark.parametrize("dash", sorted((REPO / "src").rglob("*.lvdash.json")), ids=lambda p: str(p.relative_to(REPO)))
